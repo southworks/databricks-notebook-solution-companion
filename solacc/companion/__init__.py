@@ -1,5 +1,5 @@
 # Databricks notebook source
-from dbacademy.dbrest import DBAcademyRestClient
+from dbacademy.clients.dbrest import DBAcademyRestClient
 from dbacademy.dbgems import get_cloud, get_notebook_dir
 from dbruntime.display import displayHTML
 import hashlib
