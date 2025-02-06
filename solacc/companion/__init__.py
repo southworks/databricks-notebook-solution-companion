@@ -6,6 +6,7 @@ from dbacademy.common.cloud import Cloud
 import hashlib
 import time
 import copy
+import json
 
 class NotebookSolutionCompanion():
   """
@@ -109,8 +110,11 @@ class NotebookSolutionCompanion():
   
   def deploy_compute(self, input_json, run_job=False, wait=0):
     print(f"Deploying {self.job_name} job")
-    # self.job_input_json = copy.deepcopy(input_json)
-    # self.job_params = self.customize_job_json(self.job_input_json, self.job_name, self.solacc_path, self.cloud)
+
+    self.job_input_json = copy.deepcopy(input_json)
+    self.job_params = self.customize_job_json(self.job_input_json, self.job_name, self.solacc_path, self.cloud)
+    print(json.dumps(self.job_params, indent=2))
+
     # self.job_id = self.create_or_update_job_by_name(self.job_params)
     # time.sleep(wait) # adding wait (seconds) to allow time for JSL cluster configuration using Partner Connect to complete
     # if not run_job: # if we don't run job, create interactive cluster
