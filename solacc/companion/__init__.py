@@ -115,8 +115,9 @@ class NotebookSolutionCompanion():
     self.job_params = self.customize_job_json(self.job_input_json, self.job_name, self.solacc_path, self.cloud)
     print(json.dumps(self.job_params, indent=2))
 
-    # self.job_id = self.create_or_update_job_by_name(self.job_params)
-    # time.sleep(wait) # adding wait (seconds) to allow time for JSL cluster configuration using Partner Connect to complete
+    self.job_id = self.create_or_update_job_by_name(self.job_params)
+    print(f"Job {self.job_id} is created")
+    time.sleep(wait) # adding wait (seconds) to allow time for JSL cluster configuration using Partner Connect to complete
     # if not run_job: # if we don't run job, create interactive cluster
     #   if "job_clusters" in self.job_params:
     #     for job_cluster_params in self.job_params["job_clusters"]:
