@@ -21,12 +21,6 @@ class NotebookSolutionCompanion():
     self.job_name = f"[RUNNER] {self.solution_code_name} | {hash_code}" # use hash to differentiate solutions deployed to different paths
     self.client = from_notebook()
 
-    print(f"Solution Companion for {self.solution_code_name} is initialized")
-    print("cloud: ", self.cloud)
-    print("solacc_path: ", self.solacc_path)
-    print("job_name: ", self.job_name)
-    print("client endpoint: ", self.client.endpoint)
-
   @staticmethod
   def convert_job_cluster_to_cluster(job_cluster_params):
     params = job_cluster_params["new_cluster"]
@@ -44,12 +38,10 @@ class NotebookSolutionCompanion():
       reset_params = {"job_id": job_id,
                      "new_settings": params}
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
-      print("json_response: ", json.dumps(json_response, indent=2))
       assert json_response == {}, "Job reset returned non-200 status"
       displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
     else:
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/create", params)
-      print("json_response: ", json.dumps(json_response, indent=2))
       job_id = json_response["job_id"]
       displayHTML(f"""Created <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job""")
     return job_id
@@ -111,14 +103,9 @@ class NotebookSolutionCompanion():
     return input_json
   
   def deploy_compute(self, input_json, run_job=False, wait=0):
-    print(f"Deploying {self.job_name} job")
-
     self.job_input_json = copy.deepcopy(input_json)
     self.job_params = self.customize_job_json(self.job_input_json, self.job_name, self.solacc_path, self.cloud)
-    print(json.dumps(self.job_params, indent=2))
-
     self.job_id = self.create_or_update_job_by_name(self.job_params)
-    print(f"Job {self.job_id} is created")
     time.sleep(wait) # adding wait (seconds) to allow time for JSL cluster configuration using Partner Connect to complete
     if not run_job: # if we don't run job, create interactive cluster
       if "job_clusters" in self.job_params:
