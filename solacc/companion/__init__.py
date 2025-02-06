@@ -2,7 +2,7 @@
 from dbacademy.clients.dbrest import from_notebook
 from dbacademy.dbgems import get_notebook_dir
 from dbacademy.common.cloud import Cloud
-# from dbruntime.display import displayHTML
+from dbruntime.display import displayHTML
 import hashlib
 import time
 import copy
@@ -46,12 +46,12 @@ class NotebookSolutionCompanion():
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
       print("json_response: ", json.dumps(json_response, indent=2))
       assert json_response == {}, "Job reset returned non-200 status"
-      # displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
+      displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
     else:
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/create", params)
       print("json_response: ", json.dumps(json_response, indent=2))
       job_id = json_response["job_id"]
-      # displayHTML(f"""Created <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job""")
+      displayHTML(f"""Created <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job""")
     return job_id
   
   def create_or_update_cluster_by_name(self, params):
@@ -72,12 +72,12 @@ class NotebookSolutionCompanion():
       if cluster_id: 
         params["cluster_id"] = cluster_id
         edit_cluster(cluster_id, params)
-        # displayHTML(f"""Reset the <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster to original definition""")
+        displayHTML(f"""Reset the <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster to original definition""")
         
       else:
         json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.0/clusters/create", params)
         cluster_id = json_response["cluster_id"]
-        # displayHTML(f"""Created <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster""")
+        displayHTML(f"""Created <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster""")
       return cluster_id
 
   @staticmethod
