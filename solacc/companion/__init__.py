@@ -45,13 +45,11 @@ class NotebookSolutionCompanion():
                      "new_settings": params}
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
       print("json_response: ", json.dumps(json_response, indent=2))
-      # json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params) # returns {} if status is 200
-      # assert json_response == {}, "Job reset returned non-200 status"
+      assert json_response == {}, "Job reset returned non-200 status"
       # displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
     else:
       json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/create", params)
       print("json_response: ", json.dumps(json_response, indent=2))
-      # json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.1/jobs/create", params)
       job_id = json_response["job_id"]
       # displayHTML(f"""Created <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job""")
     return job_id
@@ -59,25 +57,25 @@ class NotebookSolutionCompanion():
   def create_or_update_cluster_by_name(self, params):
       """Look up a companion cluster by name and edit with the given param and return cluster id; create a new cluster if a cluster with that name does not exist"""
       
-      def edit_cluster(client, cluster_id, params):
+      def edit_cluster(cluster_id, params):
         """Wait for a cluster to be in editable states and edit it to the specified params"""
-        cluster_state = client.execute_get_json(f"{client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
+        cluster_state = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
         while cluster_state not in ("RUNNING", "TERMINATED"): # cluster edit only works in these states; all other states will eventually turn into those two, so we wait and try later
           time.sleep(30) 
-          cluster_state = client.execute_get_json(f"{client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
-        json_response = client.execute_post_json(f"{client.endpoint}/api/2.0/clusters/edit", params) # returns {} if status is 200
+          cluster_state = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
+        json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.0/clusters/edit", params) # returns {} if status is 200
         assert json_response == {}, "Cluster edit returned non-200 status"
       
-      clusters = self.client.execute_get_json(f"{self.client.endpoint}/api/2.0/clusters/list")["clusters"]
+      clusters = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/list")["clusters"]
       clusters_matched = list(filter(lambda cluster: params["cluster_name"] == cluster["cluster_name"], clusters))
       cluster_id = clusters_matched[0]["cluster_id"] if len(clusters_matched) == 1 else None
       if cluster_id: 
         params["cluster_id"] = cluster_id
-        edit_cluster(self.client, cluster_id, params)
+        edit_cluster(cluster_id, params)
         # displayHTML(f"""Reset the <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster to original definition""")
         
       else:
-        json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.0/clusters/create", params)
+        json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.0/clusters/create", params)
         cluster_id = json_response["cluster_id"]
         # displayHTML(f"""Created <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster""")
       return cluster_id
@@ -122,12 +120,12 @@ class NotebookSolutionCompanion():
     self.job_id = self.create_or_update_job_by_name(self.job_params)
     print(f"Job {self.job_id} is created")
     time.sleep(wait) # adding wait (seconds) to allow time for JSL cluster configuration using Partner Connect to complete
-    # if not run_job: # if we don't run job, create interactive cluster
-    #   if "job_clusters" in self.job_params:
-    #     for job_cluster_params in self.job_params["job_clusters"]:
-    #       _ = self.create_or_update_cluster_by_name(self.convert_job_cluster_to_cluster(job_cluster_params))
-    # else:
-    #   self.run_job()
+    if not run_job: # if we don't run job, create interactive cluster
+      if "job_clusters" in self.job_params:
+        for job_cluster_params in self.job_params["job_clusters"]:
+          _ = self.create_or_update_cluster_by_name(self.convert_job_cluster_to_cluster(job_cluster_params))
+    else:
+      self.run_job()
 
   def run_job(self):
     self.run_id = self.client.jobs().run_now(self.job_id)["run_id"]
