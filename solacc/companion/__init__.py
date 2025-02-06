@@ -43,8 +43,10 @@ class NotebookSolutionCompanion():
     if job_id: 
       reset_params = {"job_id": job_id,
                      "new_settings": params}
-      json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params) # returns {} if status is 200
-      assert json_response == {}, "Job reset returned non-200 status"
+      json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
+      print("json_response: ", json.dumps(json_response, indent=2))
+      # json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params) # returns {} if status is 200
+      # assert json_response == {}, "Job reset returned non-200 status"
       # displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
     else:
       json_response = self.client.execute_post_json(f"{self.client.endpoint}/api/2.1/jobs/create", params)
