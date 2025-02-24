@@ -1,18 +1,17 @@
 # Databricks notebook source
 from dbacademy.clients.dbrest import from_notebook
-from dbacademy.dbgems import get_notebook_dir
 from dbacademy.common.cloud import Cloud
+from dbacademy.dbgems import get_notebook_dir
 from dbruntime.display import displayHTML
+import copy
 import hashlib
 import time
-import copy
-import json
 
 class NotebookSolutionCompanion():
   """
   A class to provision companion assets for a notebook-based solution, includingn job, cluster(s), DLT pipeline(s) and DBSQL dashboard(s)
   """
-  
+
   def __init__(self):
     self.solution_code_name = get_notebook_dir().split('/')[-1]
     self.cloud = Cloud.current_cloud()
@@ -20,6 +19,8 @@ class NotebookSolutionCompanion():
     hash_code = hashlib.sha256(self.solacc_path.encode()).hexdigest()
     self.job_name = f"[RUNNER] {self.solution_code_name} | {hash_code}" # use hash to differentiate solutions deployed to different paths
     self.client = from_notebook()
+    self.HTTP_METHOD_GET = "GET"
+    self.HTTP_METHOD_POST = "POST"
 
   @staticmethod
   def convert_job_cluster_to_cluster(job_cluster_params):
@@ -37,11 +38,11 @@ class NotebookSolutionCompanion():
     if job_id: 
       reset_params = {"job_id": job_id,
                      "new_settings": params}
-      json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
+      json_response = self.client.api(self.HTTP_METHOD_POST, f"{self.client.endpoint}/api/2.1/jobs/reset", reset_params)
       assert json_response == {}, "Job reset returned non-200 status"
       displayHTML(f"""Reset the <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job to original definition""")
     else:
-      json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.1/jobs/create", params)
+      json_response = self.client.api(self.HTTP_METHOD_POST, f"{self.client.endpoint}/api/2.1/jobs/create", params)
       job_id = json_response["job_id"]
       displayHTML(f"""Created <a href="/#job/{job_id}/tasks" target="_blank">{params["name"]}</a> job""")
     return job_id
@@ -51,14 +52,14 @@ class NotebookSolutionCompanion():
       
       def edit_cluster(cluster_id, params):
         """Wait for a cluster to be in editable states and edit it to the specified params"""
-        cluster_state = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
+        cluster_state = self.client.api(self.HTTP_METHOD_GET, f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
         while cluster_state not in ("RUNNING", "TERMINATED"): # cluster edit only works in these states; all other states will eventually turn into those two, so we wait and try later
           time.sleep(30) 
-          cluster_state = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
-        json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.0/clusters/edit", params) # returns {} if status is 200
+          cluster_state = self.client.api(self.HTTP_METHOD_GET, f"{self.client.endpoint}/api/2.0/clusters/get?cluster_id={cluster_id}")["state"]
+        json_response = self.client.api(self.HTTP_METHOD_POST, f"{self.client.endpoint}/api/2.0/clusters/edit", params) # returns {} if status is 200
         assert json_response == {}, "Cluster edit returned non-200 status"
       
-      clusters = self.client.api("GET", f"{self.client.endpoint}/api/2.0/clusters/list")["clusters"]
+      clusters = self.client.api(self.HTTP_METHOD_GET, f"{self.client.endpoint}/api/2.0/clusters/list")["clusters"]
       clusters_matched = list(filter(lambda cluster: params["cluster_name"] == cluster["cluster_name"], clusters))
       cluster_id = clusters_matched[0]["cluster_id"] if len(clusters_matched) == 1 else None
       if cluster_id: 
@@ -67,7 +68,7 @@ class NotebookSolutionCompanion():
         displayHTML(f"""Reset the <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster to original definition""")
         
       else:
-        json_response = self.client.api("POST", f"{self.client.endpoint}/api/2.0/clusters/create", params)
+        json_response = self.client.api(self.HTTP_METHOD_POST, f"{self.client.endpoint}/api/2.0/clusters/create", params)
         cluster_id = json_response["cluster_id"]
         displayHTML(f"""Created <a href="/#setting/clusters/{cluster_id}/configuration" target="_blank">{params["cluster_name"]}</a> cluster""")
       return cluster_id
